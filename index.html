@@ -90,7 +90,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <script>
-    // Firebase configuration
+    // Firebase config (your project)
     const firebaseConfig = {
       apiKey: "AIzaSyDT2RfIUczBFEQ8Zrc6rd0a9mc8MYmvqNo",
       authDomain: "to-do-buddy-a40bf.firebaseapp.com",
@@ -108,12 +108,12 @@
     let currentUser = null;
     let tasks = [];
 
-    // Sign in anonymously
+    // Enable anonymous sign-in
     auth.signInAnonymously()
       .then(() => {
         currentUser = auth.currentUser.uid;
 
-        // Add default tasks for new users
+        // Add default tasks if none exist
         db.collection('users').doc(currentUser).collection('tasks')
           .get()
           .then(snapshot => {
@@ -129,8 +129,9 @@
           })
           .then(loadTasks);
       })
-      .catch(error => console.error(error));
+      .catch(err => console.error("Auth error:", err));
 
+    // Load tasks from Firestore
     function loadTasks() {
       db.collection('users').doc(currentUser).collection('tasks')
         .orderBy('timestamp')
@@ -145,11 +146,11 @@
     function addTask() {
       const input = document.getElementById('taskInput');
       if (!input.value.trim()) return;
-
       const task = { text: input.value, completed: false, timestamp: Date.now() };
       db.collection('users').doc(currentUser).collection('tasks').add(task)
         .then(() => input.value = '')
-        .then(loadTasks);
+        .then(loadTasks)
+        .catch(err => console.error("Add task error:", err));
     }
 
     function toggleTask(index) {
@@ -182,11 +183,9 @@
     function render() {
       const list = document.getElementById('taskList');
       list.innerHTML = '';
-
       tasks.forEach((task, index) => {
         const li = document.createElement('li');
         li.className = task.completed ? 'completed' : '';
-
         li.innerHTML = `
           <span onclick="toggleTask(${index})">${task.text}</span>
           <div class="controls">
@@ -200,4 +199,3 @@
   </script>
 </body>
 </html>
-
