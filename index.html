@@ -90,7 +90,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 
   <script>
-    // Firebase configuration (your values already filled in)
     const firebaseConfig = {
       apiKey: "AIzaSyDT2RfIUczBFEQ8Zrc6rd0a9mc8MYmvqNo",
       authDomain: "to-do-buddy-a40bf.firebaseapp.com",
@@ -100,7 +99,6 @@
       appId: "1:1010796538468:web:ff55a8a341571902c80d71"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
@@ -108,15 +106,27 @@
     let currentUser = null;
     let tasks = [];
 
-    // Sign in anonymously
     auth.signInAnonymously()
       .then(() => {
         currentUser = auth.currentUser.uid;
-        loadTasks();
+        // Add default tasks if none exist
+        db.collection('users').doc(currentUser).collection('tasks')
+          .get()
+          .then(snapshot => {
+            if (snapshot.empty) {
+              const defaultTasks = [
+                { text: "Buy groceries", completed: false, timestamp: Date.now() },
+                { text: "Morning workout", completed: false, timestamp: Date.now() + 1 },
+                { text: "Read 30 minutes", completed: false, timestamp: Date.now() + 2 },
+                { text: "Pay electricity bill", completed: false, timestamp: Date.now() + 3 }
+              ];
+              defaultTasks.forEach(task => db.collection('users').doc(currentUser).collection('tasks').add(task));
+            }
+          })
+          .then(loadTasks);
       })
       .catch(error => console.error(error));
 
-    // Load tasks from Firestore
     function loadTasks() {
       db.collection('users').doc(currentUser).collection('tasks')
         .orderBy('timestamp')
